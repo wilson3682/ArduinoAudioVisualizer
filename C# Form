@@ -1,0 +1,295 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace ArduinoInterface
+{
+    public partial class Form1 : Form
+    {
+        //lists to allow us to add as many data points as we want
+        List<string> frequency = new List<string>();
+        List<string> volume = new List<string>();
+        string cur_freq;
+        string cur_vol;
+        int top = 0;
+        string choice = "b";
+        bool flag = false;
+
+        //clears all the values in the lists
+        void ClearGraph()
+        {
+            frequency.Clear();
+            volume.Clear();
+            top = 0;
+        }
+        public Form1()
+        {
+            InitializeComponent();
+
+        }
+        //starts the matrix
+        private void button1_Click(object sender, EventArgs e)
+        {
+
+            if (serialPort1.IsOpen)
+            {
+                comboBox1.Text = "Aleady Running";
+            }
+            else
+            {
+                serialPort1.Open();
+                serialPort1.Write("o");
+                comboBox1.Text = "Running";
+                flag = false;
+                checkBox1.Checked = true;
+            }
+            
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+      
+            serialPort1.RtsEnable = true;
+        }
+        //terminates the connction
+        private void button2_Click(object sender, EventArgs e)
+        {
+            flag = true;
+            comboBox1.Text = "Connection Closed";
+        }
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void chart1_Click(object sender, EventArgs e)
+        { 
+
+        }
+         
+
+        private void button3_Click(object sender, EventArgs e)  
+        { 
+            comboBox2.Text = cur_freq;
+        }
+        //this runs anytime data is sent to visual studio from the arduino board
+        private void serialPort1_DataReceived(object sender, System.IO.Ports.SerialDataReceivedEventArgs e)
+        {
+            if (top < volume.Count) { 
+                top++;
+            }
+            else
+            {
+                top = 0;
+            }
+            //points are added to the lists after the values are read from the arduino board
+            cur_freq = serialPort1.ReadLine();
+            frequency.Add(cur_freq);
+            cur_vol = serialPort1.ReadLine();
+            volume.Add(cur_vol);
+            if (flag)
+            {
+                //rns when the user wants to end the program 
+                serialPort1.Write("f");
+                serialPort1.Close();
+            }
+            else
+            {
+                serialPort1.Write("o");
+            }
+            //if the program is still running, this will keep sending the current choice back to the arduino board
+            if (flag != true) {
+                serialPort1.Write(choice);
+                if (choice == "d")
+                {
+                    //if choice d is selected, the time will be sent to the arduino board everytime visual studio receives data
+                    serialPort1.Write(DateTime.Now.ToString("h:mm ss tt"));
+                }
+            }
+            //fill the box with the current frequency(continues to update on its own)
+            comboBox2.Invoke(new Action(() =>
+            {
+                comboBox2.Text = cur_freq;
+            }));
+            
+
+        }
+
+        private void comboBox2_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        //adds points to the chart
+        private void button4_Click(object sender, EventArgs e)
+        {
+            chart1.Series["Frequency"].Points.Clear();
+            chart1.Series["Volume"].Points.Clear();
+            for (int i = 0; i < volume.Count; i++)
+            {
+                chart1.Series["Frequency"].Points.AddXY(i, frequency[i]);
+                chart1.Series["Volume"].Points.AddXY(i, volume[i]);
+            }
+        }
+        //clears the points from the chart
+        private void button5_Click(object sender, EventArgs e)
+        {
+            chart1.Series["Frequency"].Points.Clear();
+            chart1.Series["Volume"].Points.Clear();
+            ClearGraph();
+            
+        }
+
+        private void comboBox3_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+        //changes which box is checked based on which was checked previously
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+
+            if(choice == "a")
+            {
+                choice = "b";
+                checkBox1.Checked = false;
+            }
+            else if (choice == "b" || choice == "c" || choice == "d" || choice == "e" || choice == "f")
+            {
+                checkBox2.Checked = false;
+                checkBox3.Checked = false;
+                checkBox4.Checked = false;
+                checkBox5.Checked = false;
+                choice = "a";
+            }
+        }
+        //changes which box is checked based on which was checked previously
+        private void checkBox2_CheckedChanged(object sender, EventArgs e)
+        {
+            if (choice == "a" )
+            {
+                checkBox1.Checked = false;
+                choice = "b";
+               
+            }
+            else if(choice == "c")
+            {
+                checkBox3.Checked = false;
+                choice = "b";
+                
+            }
+            else if(choice == "b")
+            {
+                checkBox2.Checked = false;
+                choice = "a";
+            }
+            else if (choice == "d")
+            {
+                checkBox4.Checked = false;
+                choice = "b";
+            }
+            else if (choice == "e")
+            {
+                checkBox5.Checked = false;
+                choice = "b";
+            }
+        }
+        //changes which box is checked based on which was checked previously
+        private void checkBox3_CheckedChanged(object sender, EventArgs e)
+        {
+            if (choice == "a")
+            {
+                checkBox1.Checked = false;
+                choice = "c";
+
+            }
+            else if (choice == "b")
+            {
+                checkBox2.Checked = false;
+                choice = "c";
+
+            }
+            else if (choice == "c")
+            {
+                checkBox3.Checked = false;
+                choice = "a";
+            }
+            else if (choice == "d")
+            {
+                checkBox4.Checked = false;
+                choice = "c";
+            }
+            else if (choice == "e")
+            {
+                checkBox5.Checked = false;
+                choice = "c";
+            }
+        }
+        //changes which box is checked based on which was checked previously
+        private void checkBox4_CheckedChanged(object sender, EventArgs e)
+        {
+            if (choice == "a")
+            {
+                checkBox1.Checked = false;
+                choice = "d";
+            }
+            else if (choice == "b")
+            {
+                checkBox2.Checked = false;
+                choice = "d";
+            }
+            else if (choice == "c")
+            {
+                checkBox3.Checked = false;
+                choice = "d";
+            }
+            else if (choice == "d")
+            {
+                checkBox4.Checked = false;
+                choice = "a";
+            }
+            else if (choice == "e")
+            {
+                checkBox5.Checked = false;
+                choice = "d";
+            }
+        }
+
+        private void checkBox5_CheckedChanged(object sender, EventArgs e)
+        {
+            if (choice == "a")
+            {
+                checkBox1.Checked = false;
+                choice = "e";
+            }
+            else if (choice == "b")
+            {
+                checkBox2.Checked = false;
+                choice = "e";
+            }
+            else if (choice == "c")
+            {
+                checkBox3.Checked = false;
+                choice = "e";
+            }
+            else if (choice == "d")
+            {
+                checkBox4.Checked = false;
+                choice = "e";
+            }
+            else if(choice == "e")
+            {
+                checkBox5.Checked = false;
+                choice = "a";
+            }
+        }
+
+
+    }
+}
